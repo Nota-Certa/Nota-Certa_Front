@@ -50,7 +50,7 @@ export default function Cadastro() {
     }
   };
 
-  return (
+  return(
     <div className="flex flex-col justify-center items-center px-20 py-14">
       <Title size="lg" className="pb-14">Bem vindo ao Nota Certa!</Title>
       <p className="text-base font-normal">
