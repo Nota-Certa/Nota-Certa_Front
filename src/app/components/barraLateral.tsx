@@ -42,7 +42,7 @@ export default function BarraLateral() {
         </div>
       </a>
 
-      <a href="">
+      <a href="/login">
         <div className="flex flex-row gap-3 items-center">
           {!recolhida && <h3 className="text-white font-bold">Sair</h3>}
           <Image width={20} height={16} src="/icons/sair.svg" alt="Sair" />
