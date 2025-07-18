@@ -1,3 +1,5 @@
+"use client";
+
 import { Title } from "@/app/components/title";
 import { ButtonComponent } from "@/app/components/button";
 import { InputField } from "@/app/components/inputField";
