@@ -5,52 +5,27 @@ import { ButtonComponent } from "@/app/components/button";
 import { InputField } from "@/app/components/inputField";
 import { BlueBox } from "@/app/components/bluebox";
 import { useState } from "react";
+import { cadastro } from "@/services/auth";
+import { useRouter } from "next/navigation";
 
 export default function Cadastro() {
+  const router = useRouter();
   const [nome, setNome] = useState("");
   const [empresa, setEmpresa] = useState("");
   const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
   const [cnpj, setCnpj] = useState("");
   const [senha, setSenha] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [erro, setErro] = useState("");
+  const [erro, setError] = useState("");
 
-  const handleCadastro = async () => {
-    setLoading(true);
-    setErro("");
+  async function handleSubmit(){
     try {
-      const response = await fetch("http://localhost:3004/usuarios", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          "nome_razao_social": empresa,
-          "cnpj": cnpj,
-          "usuario":{
-            nome,
-            email,
-            "senha_hash": senha,
-            "ativo": true
-          }
-
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Erro ao cadastrar usuário");
-      }
-
-      alert("Cadastro realizado com sucesso!");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setErro(err.message);
-      } else {
-        setErro("Erro desconhecido");
-      }
-    } finally {
-      setLoading(false);
+      await cadastro(nome, empresa, telefone, email, cnpj, senha );
+      router.push("/login");
+    } catch (err) {
+      setError(`Credenciais inválidas! Verifique seus dados. ${err}`);
     }
-  };
+  }
 
   return (
     <div className="flex flex-col justify-center items-center px-20 py-14">
@@ -116,7 +91,7 @@ export default function Cadastro() {
 
         {erro && <p className="text-red-500">{erro}</p>}
         <div className="self-center">
-          <ButtonComponent label={loading ? "Cadastrando..." : "Cadastrar"} onClick={handleCadastro} disabled={loading} />
+          <ButtonComponent label={"Cadastrar"} onClick={handleSubmit} />
         </div>
       </BlueBox>
     </div>
