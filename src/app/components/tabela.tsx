@@ -35,9 +35,12 @@ export type NotaAPI = {
 type NotaTabela = {
   id: string;
   dataEmissao: string;
+  dataVencimento: string;
   descricao: string;
   valor: string;
+  impostos: string;
   prestador: string;
+  tipoPrestador: string;
   status: string;
 };
 
@@ -48,6 +51,10 @@ function formatarData(dataISO: string) {
 
 function calcularValorTotal(itens: NotaAPI["itens"]) {
   return itens.reduce((total, item) => total + item.valor_unitario * item.quantidade, 0).toFixed(2);
+}
+
+function calcularImpostoTotal(itens: NotaAPI["itens"]) {
+  return itens.reduce((total, item) => total + item.impostos.cofins + item.impostos.iss + item.impostos.pis, 0).toFixed(2);
 }
 
 function montarDescricao(itens: NotaAPI["itens"]) {
@@ -68,9 +75,12 @@ export function Tabela({ notas }: { notas: NotaAPI[] }) {
   const notasTabela: NotaTabela[] = notasPagina.map((nota) => ({
     id: nota.documento,
     dataEmissao: formatarData(nota.data_emissao),
+    dataVencimento: formatarData(nota.data_vencimento),
     descricao: montarDescricao(nota.itens),
     valor: calcularValorTotal(nota.itens),
+    impostos: calcularImpostoTotal(nota.itens),
     prestador: nota.nome_razao_social,
+    tipoPrestador: nota.tipo_pessoa,
     status: nota.status,
   }));
 
@@ -87,9 +97,12 @@ export function Tabela({ notas }: { notas: NotaAPI[] }) {
           <TableRow>
             <TableHead className="w-[100px]">ID da Nota</TableHead>
             <TableHead>Data de emissão</TableHead>
+            <TableHead>Data de vencimento</TableHead>
             <TableHead>Descrição</TableHead>
             <TableHead>Valor</TableHead>
+            <TableHead>Impostos</TableHead>
             <TableHead>Prestador</TableHead>
+            <TableHead>Tipo</TableHead>
             <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
@@ -98,9 +111,12 @@ export function Tabela({ notas }: { notas: NotaAPI[] }) {
             <TableRow key={nota.id}>
               <TableCell className="font-medium">{nota.id}</TableCell>
               <TableCell>{nota.dataEmissao}</TableCell>
+              <TableCell>{nota.dataVencimento}</TableCell>
               <TableCell>{nota.descricao}</TableCell>
               <TableCell>R$ {nota.valor}</TableCell>
+              <TableCell>R$ {nota.impostos}</TableCell>
               <TableCell>{nota.prestador}</TableCell>
+              <TableCell>{nota.tipoPrestador}</TableCell>
               <TableCell>
                 <div className={`${nota.status === "paga" ? "bg-[#37912B]" : nota.status === "cancelada" ? "bg-[#CE5454]" : nota.status === "pendente" ? "bg-[#e7c54a]" : "bg-[#696969]"} text-white py-2 px-4 rounded-xl w-fit`}>
                   {nota.status}
