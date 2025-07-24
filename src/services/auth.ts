@@ -58,3 +58,12 @@ export async function cadastro(nome: string, empresa: string, telefone: string, 
   }
   return await response.json();
 }
+
+export async function getNotas() {
+  const res = await fetch(`${API_URL}/notas-fiscais/notas`, {
+    method: "GET",
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Erro ao buscar notas");
+  return await res.json();
+}

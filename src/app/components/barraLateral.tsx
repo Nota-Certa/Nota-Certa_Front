@@ -31,7 +31,7 @@ export default function BarraLateral() {
         </div>
       </a>
 
-      <a href="">
+      <a href="./listagem-notas">
         <div className="flex flex-row gap-3 items-center">
           {!recolhida && <h3 className="text-white font-bold">Notas</h3>}
           <Image width={20} height={20} src="/icons/notas.svg" alt="Notas" />
@@ -45,7 +45,7 @@ export default function BarraLateral() {
         </div>
       </a>
 
-      <a href="">
+      <a href="./gerenciar-empresa">
         <div className="flex flex-row gap-3 items-center">
           {!recolhida && <h3 className="text-white font-bold">Configurações</h3>}
           <Image width={20} height={16} src="/icons/config.svg" alt="Configurações" />
