@@ -17,9 +17,10 @@ export default function Login() {
   async function handleSubmit() {
     try {
       await login(email, senha);
-      router.push("/gerenciar-empresa");
+      router.push("/dashboard");
     } catch (err) {
-      setError("Credenciais inválidas! Verifique seu e-mail e senha.");
+      console.error("Erro no login:", err);
+      setError("Credenciais inválidas!");
     }
   }
 
