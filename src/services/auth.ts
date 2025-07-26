@@ -6,30 +6,37 @@ export async function login(email: string, senha: string) {
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     },
-    credentials: "include",
     body: JSON.stringify({ email, senha }),
   });
 
   if (!response.ok) {
     throw new Error("Falha no login");
   }
-  return await response.json();
+
+  const data = await response.json();
+  localStorage.setItem("access_token", data.access_token);
+
+  return data;
 }
 
-export async function logout() {
-  await fetch(`${API_URL}/auth/logout`, {
-    method: "POST",
-    credentials: "include",
-  });
+export function logout() {
+  localStorage.removeItem("access_token");
 }
 
 export async function getMe() {
+  const token = localStorage.getItem("access_token");
+
   const res = await fetch(`${API_URL}/auth/me`, {
-    credentials: "include",
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
+
   if (!res.ok) throw new Error("Usuário não autenticado");
+
   return await res.json();
 }
 
