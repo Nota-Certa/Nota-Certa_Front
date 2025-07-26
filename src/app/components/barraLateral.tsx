@@ -24,7 +24,7 @@ export default function BarraLateral() {
         <Image width={20} height={14} src="/icons/expandir.svg" alt="Expandir" />
       </button>
 
-      <a href="">
+      <a href="./dashboard">
         <div className="flex flex-row gap-3 items-center">
           {!recolhida && <h3 className="text-white font-bold">Dashboard</h3>}
           <Image width={20} height={20} src="/icons/dashboard.svg" alt="dashboard" />
@@ -38,7 +38,7 @@ export default function BarraLateral() {
         </div>
       </a>
 
-      <a href="">
+      <a href="./">
         <div className="flex flex-row gap-3 items-center">
           {!recolhida && <h3 className="text-white font-bold">Criar Notas</h3>}
           <Image width={20} height={20} src="/icons/criarNota.svg" alt="Criar notas" />
