@@ -6,23 +6,27 @@ import { InputField } from "@/app/components/inputField";
 import { BlueBox } from "@/app/components/bluebox";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { login } from "@/services/auth";
+import { login, getMe } from "@/services/auth";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Login() {
   const router = useRouter();
+  const { setUser } = useAuth();
+
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
 
-  async function handleSubmit() {
+  const handleLogin = async () => {
     try {
       await login(email, senha);
+      const userData = await getMe();
+      setUser(userData);
       router.push("/dashboard");
     } catch (err) {
-      console.error("Erro no login:", err);
-      setError("Credenciais inválidas!");
+      setError("Usuário ou senha inválidos");
     }
-  }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-20 py-14">
@@ -60,7 +64,7 @@ export default function Login() {
         </div>
 
         <div className="self-center">
-          <ButtonComponent label="Entrar" onClick={handleSubmit} />
+          <ButtonComponent label="Entrar" onClick={handleLogin} />
         </div>
 
         {error && <p className="text-white-600 pt-4 self-center">{error}</p>}
