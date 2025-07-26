@@ -29,7 +29,7 @@ export async function login(email: string, senha: string) {
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({ email, senha }),
   });
@@ -39,66 +39,27 @@ export async function login(email: string, senha: string) {
   }
 
   const data = await response.json();
-  if (data.access_token) {
-    setAccessToken(data.access_token);
-  } else {
-    throw new Error("Token de acesso não recebido após o login.");
-  }
+  localStorage.setItem("access_token", data.access_token);
+
   return data;
 }
 
-export async function logout() {
-  removeAccessToken();
-  await fetch(`${API_URL}/auth/logout`, {
-    method: "POST",
-  });
+export function logout() {
+  localStorage.removeItem("access_token");
 }
 
 export async function getMe() {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Usuário não autenticado: Token não encontrado.");
-  }
+  const token = localStorage.getItem("access_token");
 
   const res = await fetch(`${API_URL}/auth/me`, {
     method: "GET",
     headers: {
-      "Authorization": `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     },
   });
 
-  if (!res.ok) {
-    if (res.status === 401) {
-      removeAccessToken();
-      throw new Error("Usuário não autenticado ou sessão expirada.");
-    }
-    throw new Error("Erro ao buscar dados do usuário.");
-  }
-  const userData = await res.json();
-  console.log("Resposta completa do getMe():", userData);
-  return userData;
-}
+  if (!res.ok) throw new Error("Usuário não autenticado");
 
-export async function getUserById(userId: string) {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Não autorizado: Token não encontrado para buscar usuário por ID.");
-  }
-
-  const res = await fetch(`${API_URL}/usuarios/${userId}`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${token}`
-    },
-  });
-
-  if (!res.ok) {
-    if (res.status === 401) {
-      removeAccessToken();
-      throw new Error("Não autorizado ou sessão expirada ao buscar usuário.");
-    }
-    throw new Error(`Erro ao buscar usuário por ID: ${res.statusText}`);
-  }
   return await res.json();
 }
 
