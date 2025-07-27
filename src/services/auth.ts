@@ -1,4 +1,6 @@
+import { NotaAPI } from "@/app/components/tabela";
 import { v4 as uuidv4 } from "uuid";
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 interface Assinatura {
   id: string;
@@ -22,8 +24,6 @@ interface UserAPI {
   criado_em?: string;
   atualizado_em?: string;
 }
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function login(email: string, senha: string) {
   const response = await fetch(`${API_URL}/auth/login`, {
@@ -281,6 +281,47 @@ export async function assinar(planoId: string, empresa_id: string) {
   return await response.json();
 }
 
+export async function atualizarAssinatura(assinaturaId: string, payload: any) {
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    throw new Error("Não autorizado: Token não encontrado.");
+  }
+
+  const response = await fetch(`${API_URL}/pagamentos/assinaturas/${assinaturaId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.message || "Erro ao atualizar assinatura.");
+  }
+
+  return await response.json();
+}
+
+export async function getTodasAssinaturas() {
+  const token = localStorage.getItem("access_token");
+  if (!token) throw new Error("Token não encontrado");
+
+  const response = await fetch(`${API_URL}/pagamentos/assinaturas`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Erro ao buscar assinaturas");
+  }
+
+  return await response.json();
+}
+
 export async function getAssinaturasByEmpresaId(empresaId: string): Promise<Assinatura[]> {
   const token = localStorage.getItem("access_token");
 
@@ -355,11 +396,9 @@ export async function checkEmployeeLimit(empresaId: string): Promise<{ canAdd: b
 
     // Defina os limites de funcionários para cada ID de assinatura
     const subscriptionLimits: { [key: string]: number } = {
-      "9b1db36f-2d4f-4bb5-9e2a-5d6fc24bfa61": 3, // Plano com limite de 3 funcionários
-      "9e8fd341-d4fd-4e09-bf12-f88b34e0983b": 10, // Plano com limite de 10 funcionários
-      // Adicione outros IDs de assinatura e seus limites aqui, se houver
-      // Para o "outro ID" que permite 50 funcionários, você precisará do ID real
-      "seu-outro-id-de-assinatura-aqui": 50, // Exemplo: Plano com limite de 50 funcionários
+      "9b1db36f-2d4f-4bb5-9e2a-5d6fc24bfa61": 3,
+      "9e8fd341-d4fd-4e09-bf12-f88b34e0983b": 10,
+      "7428e22e-89b5-4b1e-8cbf-4d2da8ad7d4f": 50,
     };
 
     // Itera sobre as assinaturas ativas para encontrar o maior limite aplicável
@@ -399,5 +438,76 @@ export async function checkEmployeeLimit(empresaId: string): Promise<{ canAdd: b
       errorMessage = error;
     }
     throw new Error(`Falha ao verificar o limite de funcionários: ${errorMessage}`);
+  }
+}
+
+export async function getNotasDaEmpresa(empresaId: string): Promise<NotaAPI[]> {
+  const todasNotas = await getNotas();
+  return todasNotas.filter(nota => nota.empresa_id === empresaId);
+}
+
+export async function getPlanoDaEmpresa(empresaId: string): Promise<string> {
+  const assinaturas = await getAssinaturasByEmpresaId(empresaId);
+  const assinaturaAtiva = assinaturas.find(ass => ass.ativo);
+
+  if (!assinaturaAtiva) {
+    throw new Error("Nenhuma assinatura ativa encontrada para a empresa.");
+  }
+
+  return assinaturaAtiva.plano_id;
+}
+
+export async function emitirNotaFiscal(data: any) {
+  const ajustado = {
+    ...data,
+    data_emissao: new Date(data.data_emissao).toISOString(),
+    data_vencimento: new Date(data.data_vencimento).toISOString(),
+  };
+
+  const res = await fetch(`${API_URL}/notas-fiscais/notas`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(ajustado),
+  });
+
+  if (!res.ok) {
+    throw new Error("Erro ao emitir nota fiscal");
+  }
+
+  return res.json();
+}
+
+export async function getNotasDoUsuario(): Promise<NotaAPI[]> {
+  try {
+    const empresaId = await getEmpresaDoUsuario();
+    const todasNotas = await getNotas();
+    const notasDoUsuario = todasNotas.filter(nota => nota.empresa_id === empresaId);
+    return notasDoUsuario;
+  } catch (error) {
+    console.error("Erro ao buscar notas do usuário:", error);
+    return [];
+  }
+}
+
+export async function atualizarStatusNota(id: string, novoStatus: string) {
+  try {
+    const response = await fetch(`${API_URL}/notas-fiscais/notas/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ status: novoStatus }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Erro ao atualizar status da nota");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Erro ao atualizar status da nota:", error);
+    throw error;
   }
 }

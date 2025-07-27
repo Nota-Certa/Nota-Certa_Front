@@ -38,7 +38,7 @@ export default function BarraLateral() {
         </div>
       </a>
 
-      <a href="./">
+      <a href="./emitir-nota-1">
         <div className="flex flex-row gap-3 items-center">
           {!recolhida && <h3 className="text-white font-bold">Criar Notas</h3>}
           <Image width={20} height={20} src="/icons/criarNota.svg" alt="Criar notas" />

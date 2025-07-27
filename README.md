@@ -83,7 +83,7 @@ O sistema opera num modelo de assinatura mensal com três níveis de plano:
 * **Cache e Mensageria:** **Redis** - Utilizado para caching de dados e como broker de mensagens para a comunicação entre microserviços (Pub/Sub).
 * **Orquestração e Ambiente:** **Docker** & **Docker Compose** - Criação de um ambiente de desenvolvimento e produção consistente e isolado.
 * **CI/CD:** **GitHub Actions** - Automação de processos de build, teste e deploy..
-* **Coponentes:** **Biclioteca Shadcn, 🔗 **[Acesse a documentação da biblioteca](https://ui.shadcn.com/docs/components)**
+* **Componentes:** **Biblioteca Shadcn**, 🔗 **[Acesse a documentação da biblioteca](https://ui.shadcn.com/docs/components)**
 
 
 ---
@@ -113,7 +113,7 @@ Para executar o ambiente de desenvolvimento localmente, siga os passos abaixo.
     npm run dev
     ```
 4.  **Acesse a aplicação:**
-    * A API do Gateway estará disponível em: `http://localhost:3000` ou se a porta 3000 estiver em uso o console da IDE mostrará a porta que está sendo usada.
+    * A API do Gateway estará disponível em: `http://localhost:8080` ou se a porta 8080 estiver em uso o console da IDE mostrará a porta que está sendo usada.
 
 ---
 
@@ -125,5 +125,6 @@ Para executar o ambiente de desenvolvimento localmente, siga os passos abaixo.
 * Jurandir Guilherme Batista da Silva
 * Leonardo da Silva Viana Filho
 * Lucas Gonçalves Venancio
+* Maria Gabrielly Anísio de Santana
 * Stella Nazário Anacleto de Oliveira
 * Tom Jones Silva Gomes Ramos
