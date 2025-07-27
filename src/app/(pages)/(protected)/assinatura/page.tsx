@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Title } from "@/app/components/title";
 import { BlueBox } from "@/app/components/bluebox";
 import { ButtonComponent } from "@/app/components/button";
+import { assinar, atualizarAssinatura, getEmpresaDoUsuario, getPlanos, getTodasAssinaturas } from "@/services/auth";
+import { useRouter } from "next/navigation";
 
 interface Plano {
   id: string;
@@ -22,70 +24,70 @@ export default function AssinaturaPage() {
   const [erro, setErro] = useState("");
   const [selectedPlano, setSelectedPlano] = useState<string>("");
   const [success, setSuccess] = useState("");
+  const [empresaId, setEmpresaId] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    async function fetchPlanos() {
+    async function fetchData() {
       setLoading(true);
       setErro("");
       try {
-        // Using the correct gateway endpoint
-        const res = await fetch("http://localhost:8080/pagamentos/planos");
-        if (!res.ok) throw new Error("Erro ao buscar planos");
-        const data = await res.json();
-        setPlanos(data);
+        const planosData = await getPlanos();
+        setPlanos(planosData);
+
+        const id = await getEmpresaDoUsuario();
+        setEmpresaId(id);
       } catch (err: unknown) {
         if (err instanceof Error) {
-          setErro(err.message || "Erro desconhecido");
+          setErro(err.message || "Erro desconhecido ao carregar dados.");
         } else {
-          setErro("Erro desconhecido");
+          setErro("Erro desconhecido ao carregar dados.");
         }
+        console.error("Erro ao carregar planos ou ID da Empresa:", err);
       } finally {
         setLoading(false);
       }
     }
-    fetchPlanos();
+    fetchData();
   }, []);
 
   const handleAssinar = async () => {
-    if (!selectedPlano) {
-      setErro("Selecione um plano");
+    if (!selectedPlano || !empresaId) {
+      setErro("Selecione um plano e aguarde os dados carregarem.");
       return;
     }
+
     setLoading(true);
     setErro("");
     setSuccess("");
+
     try {
-      // TODO: Get empresa_id from authentication context or user session
-      // For now, using a valid UUID format for testing - this should be replaced with actual user's empresa_id
-      const empresa_id = "123e4567-e89b-12d3-a456-426614174000"; // Valid UUID format for testing
-      const res = await fetch("http://localhost:8080/pagamentos/assinaturas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          planoId: selectedPlano,
-          empresa_id: empresa_id,
-          // Dates will be set automatically by the backend (30 days from now)
-        }),
-      });
-      if (!res.ok) {
-        // Try to get the detailed error message from the response
-        const errorData = await res.json().catch(() => null);
-        console.error("Subscription error:", errorData); // Debug log
-        const errorMessage = errorData?.message
-          ? Array.isArray(errorData.message)
-            ? errorData.message.join(", ")
-            : errorData.message
-          : "Erro ao assinar plano";
-        throw new Error(errorMessage);
-      }
-      setSuccess("Assinatura realizada com sucesso!");
-      setSelectedPlano(""); // Reset selection after successful subscription
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setErro(err.message || "Erro desconhecido");
+      const todasAssinaturas = await getTodasAssinaturas();
+      const assinaturaExistente = todasAssinaturas.find(
+        (a: any) => a.empresa_id === empresaId
+      );
+
+      const dataInicio = new Date();
+      const dataFim = new Date();
+      dataFim.setMonth(dataFim.getMonth() + 1);
+
+      const assinaturaPayload = {
+        plano_id: selectedPlano,
+        empresa_id: empresaId,
+        inicio: dataInicio.toISOString(),
+        fim: dataFim.toISOString(),
+      };
+
+      if (assinaturaExistente && assinaturaExistente.id) {
+        await atualizarAssinatura(assinaturaExistente.id, assinaturaPayload);
       } else {
-        setErro("Erro desconhecido");
+        await assinar(selectedPlano, empresaId);
       }
+
+      setSuccess("Assinatura atualizada com sucesso!");
+      router.push("/dashboard");
+    } catch (err: any) {
+      setErro(err.message || "Erro ao assinar plano.");
     } finally {
       setLoading(false);
     }
@@ -138,7 +140,7 @@ export default function AssinaturaPage() {
           <ButtonComponent
             label={loading ? "Processando..." : "Assinar"}
             onClick={handleAssinar}
-            disabled={loading || !selectedPlano}
+            disabled={loading || !selectedPlano || !empresaId}
           />
         </div>
       </BlueBox>

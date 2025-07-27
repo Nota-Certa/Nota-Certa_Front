@@ -16,15 +16,14 @@ export default function BarraLateral() {
 
   return (
     <div
-      className={`flex flex-col ${
-        recolhida ? "items-center w-24 py-14" : "items-end w-fit p-14"
-      } bg-primary-blue transition-all duration-300 gap-10`}
+      className={`flex flex-col ${recolhida ? "items-center w-24 py-14" : "items-end w-fit p-14"
+        } bg-primary-blue transition-all duration-300 gap-10`}
     >
       <button onClick={() => setRecolhida((v) => !v)}>
         <Image width={20} height={14} src="/icons/expandir.svg" alt="Expandir" />
       </button>
 
-      <a href="./dashboard">
+      <a href="/dashboard">
         <div className="flex flex-row gap-3 items-center">
           {!recolhida && <h3 className="text-white font-bold">Dashboard</h3>}
           <Image width={20} height={20} src="/icons/dashboard.svg" alt="dashboard" />
@@ -38,7 +37,7 @@ export default function BarraLateral() {
         </div>
       </a>
 
-      <a href="./">
+      <a href="./emitir-nota-1">
         <div className="flex flex-row gap-3 items-center">
           {!recolhida && <h3 className="text-white font-bold">Criar Notas</h3>}
           <Image width={20} height={20} src="/icons/criarNota.svg" alt="Criar notas" />

@@ -83,7 +83,7 @@ O sistema opera num modelo de assinatura mensal com três níveis de plano:
 * **Cache e Mensageria:** **Redis** - Utilizado para caching de dados e como broker de mensagens para a comunicação entre microserviços (Pub/Sub).
 * **Orquestração e Ambiente:** **Docker** & **Docker Compose** - Criação de um ambiente de desenvolvimento e produção consistente e isolado.
 * **CI/CD:** **GitHub Actions** - Automação de processos de build, teste e deploy..
-* **Coponentes:** **Biclioteca Shadcn, 🔗 **[Acesse a documentação da biblioteca](https://ui.shadcn.com/docs/components)**
+* **Componentes:** **Biblioteca Shadcn**, 🔗 **[Acesse a documentação da biblioteca](https://ui.shadcn.com/docs/components)**
 
 
 ---
@@ -96,16 +96,16 @@ Para executar o ambiente de desenvolvimento localmente, siga os passos abaixo.
 
 1.  **Clone o repositório:**
     ```bash
-    git clone https://github.com/Nota-Certa/Nota-Certa_Back.git
-    cd Nota-Certa_Back
+    git clone https://github.com/Nota-Certa/Nota-Certa_Front.git
+    cd Nota-Certa_Front
     ```
 
 2.  **Configure as variáveis de ambiente:**
-    Copie o arquivo de exemplo `.env.example` para um novo arquivo `.env`.
+    Copie o arquivo de exemplo `.env.example` para um novo arquivo `.env.local`.
     ```bash
-    cp .env.example .env
+    cp .env.example .env.local
     ```
-    Em seguida, abra o ficheiro `.env` e preencha as variáveis necessárias.
+    Em seguida, abra o ficheiro `.env.local` e preencha as variáveis necessárias.
 
 3.  **Rode o Projeto**
     Utilize o nom run dev para iniciar o front-end e acessar os serviços.
@@ -113,7 +113,7 @@ Para executar o ambiente de desenvolvimento localmente, siga os passos abaixo.
     npm run dev
     ```
 4.  **Acesse a aplicação:**
-    * A API do Gateway estará disponível em: `http://localhost:3000` ou se a porta 3000 estiver em uso o console da IDE mostrará a porta que está sendo usada.
+    * A API do Gateway estará disponível em: `http://localhost:8080` ou se a porta 8080 estiver em uso o console da IDE mostrará a porta que está sendo usada.
 
 ---
 
@@ -125,5 +125,6 @@ Para executar o ambiente de desenvolvimento localmente, siga os passos abaixo.
 * Jurandir Guilherme Batista da Silva
 * Leonardo da Silva Viana Filho
 * Lucas Gonçalves Venancio
+* Maria Gabrielly Anísio de Santana
 * Stella Nazário Anacleto de Oliveira
 * Tom Jones Silva Gomes Ramos

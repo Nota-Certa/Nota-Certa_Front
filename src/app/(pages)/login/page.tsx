@@ -6,7 +6,7 @@ import { InputField } from "@/app/components/inputField";
 import { BlueBox } from "@/app/components/bluebox";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { login, getMe } from "@/services/auth";
+import { login, getMe, getAssinaturasByEmpresaId, getEmpresaDoUsuario } from "@/services/auth";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Login() {
@@ -16,15 +16,52 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    setError("");
+    setLoading(true);
+
     try {
       await login(email, senha);
+
       const userData = await getMe();
       setUser(userData);
-      router.push("/dashboard");
-    } catch (err) {
-      setError("Usuário ou senha inválidos");
+
+      const empresaId = await getEmpresaDoUsuario();
+
+      let hasActiveSubscription = false;
+
+      if (empresaId) {
+        try {
+          const assinaturas = await getAssinaturasByEmpresaId(empresaId);
+          if (assinaturas.length > 0) {
+            hasActiveSubscription = true;
+          }
+        } catch (err: unknown) {
+          console.error("Erro ao verificar assinaturas após login:", err);
+        }
+      } else {
+        console.warn("Não foi possível obter o ID da empresa após o login. Redirecionando para seleção de planos.");
+      }
+
+      if (hasActiveSubscription) {
+        router.push("/dashboard");
+      } else {
+        router.push("/assinatura");
+      }
+
+    } catch (err: unknown) {
+      let errorMessage = "Erro desconhecido ao tentar fazer login.";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (typeof err === "string") {
+        errorMessage = err;
+      }
+      setError(`Falha no login: ${errorMessage}. Verifique seu e-mail e senha.`);
+      console.error("Erro geral no fluxo de login:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,7 +101,11 @@ export default function Login() {
         </div>
 
         <div className="self-center">
-          <ButtonComponent label="Entrar" onClick={handleLogin} />
+          <ButtonComponent
+            label={loading ? "Entrando..." : "Entrar"}
+            onClick={handleLogin}
+            disabled={loading}
+          />
         </div>
 
         {error && <p className="text-white-600 pt-4 self-center">{error}</p>}

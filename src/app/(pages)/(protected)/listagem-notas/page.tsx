@@ -3,7 +3,7 @@
 import BarraLateral from "@/app/components/barraLateral";
 import { Tabela, NotaAPI } from "@/app/components/tabela";
 import { useEffect, useState } from "react";
-import { getNotas } from "@/services/auth";
+import { getNotasDoUsuario } from "@/services/auth";
 import Busca from "@/app/components/busca";
 
 export default function ListagemNotas() {
@@ -13,7 +13,7 @@ export default function ListagemNotas() {
   const [termoBusca, setTermoBusca] = useState("");
 
   useEffect(() => {
-    getNotas()
+    getNotasDoUsuario()
       .then((data) => {
         setNotas(data);
         setNotasFiltradas(data);
@@ -31,8 +31,6 @@ export default function ListagemNotas() {
     } else {
       const notasFiltered = notas.filter((nota: NotaAPI) => {
         const termoBuscaLower = termoBusca.toLowerCase();
-
-        // Busca em todos os valores da nota de forma segura
         return Object.values(nota).some((valor) => {
           if (valor == null) return false;
           return String(valor).toLowerCase().includes(termoBuscaLower);
@@ -66,8 +64,16 @@ export default function ListagemNotas() {
                 {notasFiltradas.length} resultado(s) encontrado(s) para &quot;{termoBusca}&quot;
               </div>
             )}
-            <Tabela notas={notasFiltradas} />
-          </>
+            <Tabela
+              notas={notasFiltradas}
+              onStatusChange={(id, novoStatus) => {
+                setNotas((prev) =>
+                  prev.map((n) =>
+                    n.id === id ? { ...n, status: novoStatus } : n
+                  )
+                );
+              }}
+            />          </>
         )}
       </div>
     </div>
