@@ -21,7 +21,7 @@ export default function Cadastro() {
   async function handleSubmit(){
     try {
       await cadastro(nome, empresa, telefone, email, cnpj, senha );
-      router.push("/assinatura");
+      router.push("/login");
     } catch (err) {
       setError(`Credenciais inválidas! Verifique seus dados. ${err}`);
     }
