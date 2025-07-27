@@ -4,7 +4,6 @@ import BarraLateral from "@/app/components/barraLateral";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { getNotasPeriodo, getRanking } from "@/services/dashboard";
 
-// Define interfaces for data structures
 interface Cliente {
   documento: string;
   nome_razao_social: string;
@@ -123,7 +122,7 @@ export default function Dashboard() {
     if (notes && Array.isArray(notes)) {
       notes.forEach((note: Note) => {
         if (note.status) {
-          const statusKey = note.status.toUpperCase(); // Ensure case-insensitivity
+          const statusKey = note.status.toUpperCase();
           if (statusCounts.hasOwnProperty(statusKey)) {
             statusCounts[statusKey]++;
             totalRelevantNotes++;
@@ -134,7 +133,6 @@ export default function Dashboard() {
 
     const pieData: PieChartDataItem[] = [];
     if (totalRelevantNotes > 0) {
-      // Order of statuses for consistent color mapping
       const orderedStatuses = ["CANCELADA", "PAGA", "PENDENTE"];
       orderedStatuses.forEach(status => {
         const count = statusCounts[status];
@@ -147,7 +145,6 @@ export default function Dashboard() {
         pieData.push({ name: displayName, value: parseFloat(percentage.toFixed(1)) });
       });
     } else {
-      // Default to 0% if no relevant notes are found
       pieData.push({ name: "Cancelada", value: 0 });
       pieData.push({ name: "Paga", value: 0 });
       pieData.push({ name: "Pendente", value: 0 });
