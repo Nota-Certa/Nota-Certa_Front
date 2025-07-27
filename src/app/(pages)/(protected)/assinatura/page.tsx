@@ -4,6 +4,7 @@ import { Title } from "@/app/components/title";
 import { BlueBox } from "@/app/components/bluebox";
 import { ButtonComponent } from "@/app/components/button";
 import { assinar, getEmpresaDoUsuario, getPlanos } from "@/services/auth";
+import { useRouter } from "next/navigation";
 
 interface Plano {
   id: string;
@@ -24,6 +25,7 @@ export default function AssinaturaPage() {
   const [selectedPlano, setSelectedPlano] = useState<string>("");
   const [success, setSuccess] = useState("");
   const [empresaId, setEmpresaId] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchData() {
@@ -67,6 +69,7 @@ export default function AssinaturaPage() {
       await assinar(selectedPlano, empresaId);
       setSuccess("Assinatura realizada com sucesso!");
       setSelectedPlano("");
+      router.push("/dashboard");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setErro(err.message || "Erro desconhecido ao assinar plano.");
