@@ -1,5 +1,28 @@
 import { v4 as uuidv4 } from "uuid";
 
+interface Assinatura {
+  id: string;
+  empresa_id: string;
+  plano_id: string;
+  inicio: string;
+  fim: string;
+  ativo: boolean;
+  criado_em?: string;
+  atualizado_em?: string;
+}
+
+interface UserAPI {
+  id: string;
+  empresa_id: string;
+  nome: string;
+  email: string;
+  senha?: string;
+  role: string;
+  ativo: boolean;
+  criado_em?: string;
+  atualizado_em?: string;
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function login(email: string, senha: string) {
@@ -186,4 +209,195 @@ export async function editarEmpresa(empresaId: string, nomeRazaoSocial: string, 
     throw new Error(`Falha ao editar empresa ${response.status}: ${errorBody}`);
   }
   return await response.json();
+}
+
+export async function getPlanos(){
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    throw new Error("Não autorizado: Token não encontrado para buscar usuário por ID.");
+  }
+
+  const response = await fetch(`${API_URL}/pagamentos/planos`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem("access_token");
+      throw new Error("Não autorizado: Sua sessão pode ter expirado. Por favor, faça login novamente.");
+    }
+    throw new Error(`Erro ao buscar planos: ${response.statusText}`);
+  }
+  return await response.json();
+}
+
+export async function assinar(planoId: string, empresa_id: string) {
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    throw new Error("Não autorizado: Token não encontrado para realizar assinatura.");
+  }
+
+  const dataInicio = new Date();
+  const dataFim = new Date();
+  dataFim.setMonth(dataFim.getMonth() + 1);
+
+  const inicioISO = dataInicio.toISOString();
+  const fimISO = dataFim.toISOString();
+
+  const response = await fetch(`${API_URL}/pagamentos/assinaturas`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      "plano_id": planoId,
+      empresa_id,
+      inicio: inicioISO,
+      fim: fimISO,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    console.error(`Erro ${response.status} ao fazer assinatura:`, errorData);
+    const errorMessage = errorData?.message
+      ? Array.isArray(errorData.message)
+        ? errorData.message.join(", ")
+        : errorData.message
+      : `Falha ao fazer assinatura ${response.status}`;
+
+    if (response.status === 401) {
+      localStorage.removeItem("access_token");
+      throw new Error("Não autorizado: Sua sessão pode ter expirado. Por favor, faça login novamente.");
+    }
+    throw new Error(errorMessage);
+  }
+  return await response.json();
+}
+
+export async function getAssinaturasByEmpresaId(empresaId: string): Promise<Assinatura[]> {
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    throw new Error("Não autorizado: Token não encontrado para buscar assinaturas.");
+  }
+
+  const response = await fetch(`${API_URL}/pagamentos/assinaturas`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem("access_token");
+      throw new Error("Não autorizado: Sua sessão pode ter expirado. Por favor, faça login novamente.");
+    }
+    throw new Error(`Erro ao buscar assinaturas: ${response.statusText}`);
+  }
+
+  const todasAssinaturas: Assinatura[] = await response.json();
+
+  // Filtra as assinaturas para encontrar apenas as da empresa_id específica
+  const assinaturasDaEmpresa = todasAssinaturas.filter(
+    (assinatura) => assinatura.empresa_id === empresaId && assinatura.ativo === true
+  );
+
+  return assinaturasDaEmpresa;
+}
+
+export async function getUsuarios(): Promise<UserAPI[]>{
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    throw new Error("Não autorizado: Token não encontrado para buscar assinaturas.");
+  }
+
+  const response = await fetch(`${API_URL}/usuarios`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem("access_token");
+      throw new Error("Não autorizado: Sua sessão pode ter expirado. Por favor, faça login novamente.");
+    }
+    throw new Error(`Erro ao buscar usuarios: ${response.statusText}`);
+  }
+  return await response.json();
+}
+
+export async function getEmployeeCountForCompany(empresaId: string): Promise<number> {
+  const allUsers = await getUsuarios();
+
+  const employeesOfCompany = allUsers.filter(user => user.empresa_id === empresaId);
+
+  return employeesOfCompany.length;
+}
+
+export async function checkEmployeeLimit(empresaId: string): Promise<{ canAdd: boolean; currentCount: number; maxAllowed: number; message: string }> {
+  try {
+    const assinaturasAtivas = await getAssinaturasByEmpresaId(empresaId);
+    const currentEmployeeCount = await getEmployeeCountForCompany(empresaId);
+
+    let maxAllowedEmployees = 0;
+    let hasValidSubscription = false;
+
+    // Defina os limites de funcionários para cada ID de assinatura
+    const subscriptionLimits: { [key: string]: number } = {
+      "9b1db36f-2d4f-4bb5-9e2a-5d6fc24bfa61": 3, // Plano com limite de 3 funcionários
+      "9e8fd341-d4fd-4e09-bf12-f88b34e0983b": 10, // Plano com limite de 10 funcionários
+      // Adicione outros IDs de assinatura e seus limites aqui, se houver
+      // Para o "outro ID" que permite 50 funcionários, você precisará do ID real
+      "seu-outro-id-de-assinatura-aqui": 50, // Exemplo: Plano com limite de 50 funcionários
+    };
+
+    // Itera sobre as assinaturas ativas para encontrar o maior limite aplicável
+    for (const assinatura of assinaturasAtivas) {
+      if (subscriptionLimits[assinatura.plano_id] !== undefined) {
+        maxAllowedEmployees = Math.max(maxAllowedEmployees, subscriptionLimits[assinatura.plano_id]);
+        hasValidSubscription = true;
+      }
+    }
+
+    if (!hasValidSubscription) {
+      return {
+        canAdd: false,
+        currentCount: currentEmployeeCount,
+        maxAllowed: 0,
+        message: "Nenhuma assinatura ativa encontrada para esta empresa, ou assinatura sem limite definido. Por favor, assine um plano.",
+      };
+    }
+
+    const canAdd = currentEmployeeCount < maxAllowedEmployees;
+    const message = canAdd
+      ? `A empresa tem ${currentEmployeeCount} de ${maxAllowedEmployees} funcionários permitidos. Pode adicionar mais.`
+      : `A empresa atingiu o limite de ${maxAllowedEmployees} funcionários com ${currentEmployeeCount} funcionários. Atualize seu plano para adicionar mais.`;
+
+    return {
+      canAdd,
+      currentCount: currentEmployeeCount,
+      maxAllowed: maxAllowedEmployees,
+      message,
+    };
+  } catch (error) {
+    console.error("Erro ao verificar o limite de funcionários:", error);
+    let errorMessage = "Erro desconhecido ao verificar o limite de funcionários.";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (typeof error === "string") {
+      errorMessage = error;
+    }
+    throw new Error(`Falha ao verificar o limite de funcionários: ${errorMessage}`);
+  }
 }
