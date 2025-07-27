@@ -3,7 +3,7 @@
 import BarraLateral from "@/app/components/barraLateral";
 import { ButtonComponent } from "@/app/components/button";
 import { InputField } from "@/app/components/inputField";
-import { getEmpresaDoUsuario, cadastroFuncionario, editarEmpresa, getAssinaturasByEmpresaId } from "@/services/auth";
+import { getEmpresaDoUsuario, cadastroFuncionario, editarEmpresa, getAssinaturasByEmpresaId, checkEmployeeLimit } from "@/services/auth";
 import { useEffect, useState } from "react";
 
 interface Assinatura {
@@ -27,13 +27,20 @@ export default function Gerenciar() {
   const [assinaturaAtiva, setAssinaturaAtiva] = useState<Assinatura | null>(null);
   const [loadingAssinatura, setLoadingAssinatura] = useState(true);
   const [erroAssinatura, setErroAssinatura] = useState<string | null>(null);
+  const [canAddEmployee, setCanAddEmployee] = useState(true);
+  const [employeeLimitMessage, setEmployeeLimitMessage] = useState<string>("");
+  const [currentEmployeeCount, setCurrentEmployeeCount] = useState<number>(0);
+  const [maxAllowedEmployees, setMaxAllowedEmployees] = useState<number>(0);
+  const [loadingEmployeeLimit, setLoadingEmployeeLimit] = useState(true);
 
   useEffect(() => {
-    const carregarEmpresaId = async () => {
+    const carregarDadosDaEmpresa = async () => {
       try {
         const id = await getEmpresaDoUsuario();
         setEmpresaId(id);
+
         if (id) {
+          // Carregar informações da assinatura
           try {
             const assinaturas = await getAssinaturasByEmpresaId(id);
             if (assinaturas.length > 0) {
@@ -47,14 +54,32 @@ export default function Gerenciar() {
           } finally {
             setLoadingAssinatura(false);
           }
+
+          // Verificar o limite de funcionários
+          try {
+            const { canAdd, currentCount, maxAllowed, message } = await checkEmployeeLimit(id);
+            setCanAddEmployee(canAdd);
+            setCurrentEmployeeCount(currentCount);
+            setMaxAllowedEmployees(maxAllowed);
+            setEmployeeLimitMessage(message);
+          } catch (err) {
+            console.error("Erro ao verificar o limite de funcionários:", err);
+            setEmployeeLimitMessage("Erro ao verificar o limite de funcionários.");
+            setCanAddEmployee(false); // Assume que não pode adicionar em caso de erro
+          } finally {
+            setLoadingEmployeeLimit(false);
+          }
         }
       } catch (error) {
         console.error("Erro ao carregar ID da Empresa:", error);
+        setErroAssinatura("Não foi possível carregar o ID da empresa.");
+        setLoadingAssinatura(false);
+        setLoadingEmployeeLimit(false);
       }
     };
 
-    carregarEmpresaId();
-  }, []);
+    carregarDadosDaEmpresa();
+  }, [empresaId]);
 
   const handleCadastroFuncionario = async () => {
     if (!empresaId) {
@@ -64,6 +89,12 @@ export default function Gerenciar() {
 
     if (!nomeFuncionario || !emailFuncionario || !senhaFuncionario) {
       alert("Por favor, preencha todos os campos do funcionário.");
+      return;
+    }
+
+    // Verifica o limite de funcionários antes de cadastrar
+    if (!canAddEmployee) {
+      alert(`Não é possível cadastrar o funcionário. ${employeeLimitMessage}`);
       return;
     }
 
@@ -78,6 +109,12 @@ export default function Gerenciar() {
       setNomeFuncionario("");
       setEmailFuncionario("");
       setSenhaFuncionario("");
+      // Recarrega os dados para atualizar a contagem de funcionários e a mensagem de limite
+      const { canAdd, currentCount, maxAllowed, message } = await checkEmployeeLimit(empresaId);
+      setCanAddEmployee(canAdd);
+      setCurrentEmployeeCount(currentCount);
+      setMaxAllowedEmployees(maxAllowed);
+      setEmployeeLimitMessage(message);
     } catch (error) {
       console.error("Erro ao cadastrar funcionário:", error);
 
@@ -127,7 +164,6 @@ export default function Gerenciar() {
   };
 
   function nomePlano(planoId: string | undefined): string{
-    // assinatura.id é mock
     if (!planoId) return "Não disponível";
     if(planoId == "9b1db36f-2d4f-4bb5-9e2a-5d6fc24bfa61"){
       return "Freemium";
