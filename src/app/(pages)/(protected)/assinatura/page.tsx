@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Title } from "@/app/components/title";
 import { BlueBox } from "@/app/components/bluebox";
 import { ButtonComponent } from "@/app/components/button";
-import { assinar, getEmpresaDoUsuario, getPlanos } from "@/services/auth";
+import { assinar, atualizarAssinatura, getEmpresaDoUsuario, getPlanos, getTodasAssinaturas } from "@/services/auth";
 import { useRouter } from "next/navigation";
 
 interface Plano {
@@ -52,31 +52,42 @@ export default function AssinaturaPage() {
   }, []);
 
   const handleAssinar = async () => {
-    if (!selectedPlano) {
-      setErro("Selecione um plano");
-      return;
-    }
-
-    if (!empresaId) {
-      setErro("ID da empresa não disponível. Tente novamente mais tarde.");
+    if (!selectedPlano || !empresaId) {
+      setErro("Selecione um plano e aguarde os dados carregarem.");
       return;
     }
 
     setLoading(true);
     setErro("");
     setSuccess("");
+
     try {
-      await assinar(selectedPlano, empresaId);
-      setSuccess("Assinatura realizada com sucesso!");
-      setSelectedPlano("");
-      router.push("/dashboard");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setErro(err.message || "Erro desconhecido ao assinar plano.");
+      const todasAssinaturas = await getTodasAssinaturas();
+      const assinaturaExistente = todasAssinaturas.find(
+        (a: any) => a.empresa_id === empresaId
+      );
+
+      const dataInicio = new Date();
+      const dataFim = new Date();
+      dataFim.setMonth(dataFim.getMonth() + 1);
+
+      const assinaturaPayload = {
+        plano_id: selectedPlano,
+        empresa_id: empresaId,
+        inicio: dataInicio.toISOString(),
+        fim: dataFim.toISOString(),
+      };
+
+      if (assinaturaExistente && assinaturaExistente.id) {
+        await atualizarAssinatura(assinaturaExistente.id, assinaturaPayload);
       } else {
-        setErro("Erro desconhecido ao assinar plano.");
+        await assinar(selectedPlano, empresaId);
       }
-      console.error("Erro ao assinar plano:", err);
+
+      setSuccess("Assinatura atualizada com sucesso!");
+      router.push("/dashboard");
+    } catch (err: any) {
+      setErro(err.message || "Erro ao assinar plano.");
     } finally {
       setLoading(false);
     }
