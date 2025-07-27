@@ -96,16 +96,16 @@ Para executar o ambiente de desenvolvimento localmente, siga os passos abaixo.
 
 1.  **Clone o repositório:**
     ```bash
-    git clone https://github.com/Nota-Certa/Nota-Certa_Back.git
-    cd Nota-Certa_Back
+    git clone https://github.com/Nota-Certa/Nota-Certa_Front.git
+    cd Nota-Certa_Front
     ```
 
 2.  **Configure as variáveis de ambiente:**
-    Copie o arquivo de exemplo `.env.example` para um novo arquivo `.env`.
+    Copie o arquivo de exemplo `.env.example` para um novo arquivo `.env.local`.
     ```bash
-    cp .env.example .env
+    cp .env.example .env.local
     ```
-    Em seguida, abra o ficheiro `.env` e preencha as variáveis necessárias.
+    Em seguida, abra o ficheiro `.env.local` e preencha as variáveis necessárias.
 
 3.  **Rode o Projeto**
     Utilize o nom run dev para iniciar o front-end e acessar os serviços.
