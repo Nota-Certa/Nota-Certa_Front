@@ -4,3 +4,14 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString("pt-BR");
+};
+
+export const formatCurrency = (value: string) => {
+  return parseFloat(value).toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
