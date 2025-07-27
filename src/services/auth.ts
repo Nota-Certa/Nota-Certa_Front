@@ -1,5 +1,15 @@
 import { v4 as uuidv4 } from "uuid";
 
+interface Assinatura {
+  id: string;
+  empresa_id: string;
+  plano_id: string;
+  inicio: string;
+  fim: string;
+  ativo: boolean;
+  criado_em?: string;
+  atualizado_em?: string;
+}
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function login(email: string, senha: string) {
@@ -186,4 +196,106 @@ export async function editarEmpresa(empresaId: string, nomeRazaoSocial: string, 
     throw new Error(`Falha ao editar empresa ${response.status}: ${errorBody}`);
   }
   return await response.json();
+}
+
+export async function getPlanos(){
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    throw new Error("Não autorizado: Token não encontrado para buscar usuário por ID.");
+  }
+
+  const response = await fetch(`${API_URL}/pagamentos/planos`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem("access_token");
+      throw new Error("Não autorizado: Sua sessão pode ter expirado. Por favor, faça login novamente.");
+    }
+    throw new Error(`Erro ao buscar planos: ${response.statusText}`);
+  }
+  return await response.json();
+}
+
+export async function assinar(planoId: string, empresa_id: string) {
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    throw new Error("Não autorizado: Token não encontrado para realizar assinatura.");
+  }
+
+  const dataInicio = new Date();
+  const dataFim = new Date();
+  dataFim.setMonth(dataFim.getMonth() + 1);
+
+  const inicioISO = dataInicio.toISOString();
+  const fimISO = dataFim.toISOString();
+
+  const response = await fetch(`${API_URL}/pagamentos/assinaturas`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      "plano_id": planoId,
+      empresa_id,
+      inicio: inicioISO,
+      fim: fimISO,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null);
+    console.error(`Erro ${response.status} ao fazer assinatura:`, errorData);
+    const errorMessage = errorData?.message
+      ? Array.isArray(errorData.message)
+        ? errorData.message.join(", ")
+        : errorData.message
+      : `Falha ao fazer assinatura ${response.status}`;
+
+    if (response.status === 401) {
+      localStorage.removeItem("access_token");
+      throw new Error("Não autorizado: Sua sessão pode ter expirado. Por favor, faça login novamente.");
+    }
+    throw new Error(errorMessage);
+  }
+  return await response.json();
+}
+
+export async function getAssinaturasByEmpresaId(empresaId: string): Promise<Assinatura[]> {
+  const token = localStorage.getItem("access_token");
+
+  if (!token) {
+    throw new Error("Não autorizado: Token não encontrado para buscar assinaturas.");
+  }
+
+  const response = await fetch(`${API_URL}/pagamentos/assinaturas`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      localStorage.removeItem("access_token");
+      throw new Error("Não autorizado: Sua sessão pode ter expirado. Por favor, faça login novamente.");
+    }
+    throw new Error(`Erro ao buscar assinaturas: ${response.statusText}`);
+  }
+
+  const todasAssinaturas: Assinatura[] = await response.json();
+
+  // Filtra as assinaturas para encontrar apenas as da empresa_id específica
+  const assinaturasDaEmpresa = todasAssinaturas.filter(
+    (assinatura) => assinatura.empresa_id === empresaId && assinatura.ativo === true
+  );
+
+  return assinaturasDaEmpresa;
 }
