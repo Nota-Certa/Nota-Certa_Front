@@ -1,6 +1,6 @@
 import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
 import { NotaFiscal } from "./types";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { calcularTotais, formatCurrency, formatDate } from "@/lib/utils";
 
 const styles = StyleSheet.create({
   page: {
@@ -66,77 +66,95 @@ const styles = StyleSheet.create({
   },
 });
 
-const NotaFiscalPDF = ({ data }: { data: NotaFiscal }) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      <View style={styles.header}>
-        <Text style={styles.title}>NOTA FISCAL</Text>
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.row}>
-          <Text style={styles.label}>Nº Nota Fiscal:</Text>
-          <Text style={styles.value}>{data.id}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Cliente:</Text>
-          <Text style={styles.value}>{data.nome_razao_social}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>CPF/CNPJ:</Text>
-          <Text style={styles.value}>{data.documento}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Data Emissão:</Text>
-          <Text style={styles.value}>{formatDate(data.data_emissao)}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Data Vencimento:</Text>
-          <Text style={styles.value}>{formatDate(data.data_vencimento)}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Status:</Text>
-          <Text style={styles.value}>{data.status.toUpperCase()}</Text>
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={{ marginBottom: 4, fontWeight: "bold" }}>Itens:</Text>
-        <View style={styles.tableHeader}>
-          <Text style={styles.col1}>Descrição</Text>
-          <Text style={styles.col2}>Qtd</Text>
-          <Text style={styles.col3}>Unitário</Text>
-          <Text style={styles.col4}>Impostos</Text>
-          <Text style={styles.col5}>Total Item</Text>
+const NotaFiscalPDF = ({ data }: { data: NotaFiscal }) => {
+  const valores = calcularTotais(data.itens);
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.header}>
+          <Text style={styles.title}>NOTA FISCAL</Text>
         </View>
 
-        {data.itens.map((item) => (
-          <View key={item.id} style={styles.tableRow}>
-            <Text style={styles.col1}>{item.descricao}</Text>
-            <Text style={styles.col2}>{item.quantidade}</Text>
-            <Text style={styles.col3}>
-              R$ {formatCurrency(item.valor_unitario)}
-            </Text>
-            <Text style={[styles.col4, styles.impostosText]}>
-              IPI: R$ {formatCurrency(item.impostos.IPI.toString())}
-              {" | "}
-              ICMS: R$ {formatCurrency(item.impostos.ICMS.toString())}
-            </Text>
-            <Text style={styles.col5}>
-              R${" "}
-              {formatCurrency(
-                (parseFloat(item.valor_unitario) * item.quantidade).toString()
-              )}
-            </Text>
+        <View style={styles.section}>
+          <View style={styles.row}>
+            <Text style={styles.label}>Nº Nota Fiscal:</Text>
+            <Text style={styles.value}>{data.id}</Text>
           </View>
-        ))}
-      </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Cliente:</Text>
+            <Text style={styles.value}>{data.nome_razao_social}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>CPF/CNPJ:</Text>
+            <Text style={styles.value}>{data.documento}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Data Emissão:</Text>
+            <Text style={styles.value}>{formatDate(data.data_emissao)}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Data Vencimento:</Text>
+            <Text style={styles.value}>{formatDate(data.data_vencimento)}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Status:</Text>
+            <Text style={styles.value}>{data.status.toUpperCase()}</Text>
+          </View>
+        </View>
 
-      <View style={styles.totalRow}>
-        <Text>VALOR TOTAL: R$ {formatCurrency(data.valor_total)}</Text>
-      </View>
-    </Page>
-  </Document>
-);
+        <View style={styles.section}>
+          <Text style={{ marginBottom: 4, fontWeight: "bold" }}>Itens:</Text>
+          <View style={styles.tableHeader}>
+            <Text style={styles.col1}>Descrição</Text>
+            <Text style={styles.col2}>Qtd</Text>
+            <Text style={styles.col3}>Unitário</Text>
+            <Text style={styles.col4}>Impostos</Text>
+            <Text style={styles.col5}>Total Item</Text>
+          </View>
+
+          {data.itens.map((item) => (
+            <View key={item.id} style={styles.tableRow}>
+              <Text style={styles.col1}>{item.descricao}</Text>
+              <Text style={styles.col2}>{item.quantidade}</Text>
+              <Text style={styles.col3}>
+                R$ {formatCurrency(item.valor_unitario)}
+              </Text>
+              <Text style={[styles.col4, styles.impostosText]}>
+                IPI: R$ {formatCurrency(item.impostos.IPI.toString())}
+                {" | "}
+                ICMS: R$ {formatCurrency(item.impostos.ICMS.toString())}
+                {" | "}
+                COFINS : R$ {formatCurrency(item.impostos.COFINS.toString())}
+                {" | "}
+                PIS: R$ {formatCurrency(item.impostos.PIS.toString())}
+              </Text>
+              <Text style={styles.col5}>
+                R${" "}
+                {formatCurrency(
+                  (
+                    parseFloat(item.valor_unitario) * item.quantidade +
+                    item.impostos.IPI +
+                    item.impostos.ICMS +
+                    item.impostos.COFINS +
+                    item.impostos.PIS
+                  ).toString()
+                )}
+              </Text>
+            </View>
+          ))}
+        </View>
+        <View style={styles.totalRow}>
+          <Text>
+            VALOR TOTAL DE IMPOSTOS: R${" "}
+            {formatCurrency(valores.valorTotalDeImposto)}
+          </Text>
+        </View>
+        <View style={styles.totalRow}>
+          <Text>VALOR TOTAL: R$ {formatCurrency(valores.valorTotalNota)}</Text>
+        </View>
+      </Page>
+    </Document>
+  );
+};
 
 export default NotaFiscalPDF;

@@ -11,6 +11,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { atualizarStatusNota } from "@/services/auth";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Tipo da nota conforme o backend
 export type NotaAPI = {
@@ -55,26 +58,30 @@ function formatarData(dataISO: string) {
 }
 
 function calcularValorTotal(itens: NotaAPI["itens"]) {
-  return itens.reduce((total, item) => total + item.valor_unitario * item.quantidade, 0).toFixed(2);
+  return itens
+    .reduce((total, item) => total + item.valor_unitario * item.quantidade, 0)
+    .toFixed(2);
 }
 
 function calcularImpostoTotal(itens: NotaAPI["itens"]) {
-  return itens.reduce((total, item) => {
-    const impostos = item.impostos;
-    const somaImpostos =
-      (impostos.ICMS || 0) +
-      (impostos.ISS || 0) +
-      (impostos.PIS || 0) +
-      (impostos.COFINS || 0) +
-      (impostos.IPI || 0);
+  return itens
+    .reduce((total, item) => {
+      const impostos = item.impostos;
+      const somaImpostos =
+        (impostos.ICMS || 0) +
+        (impostos.ISS || 0) +
+        (impostos.PIS || 0) +
+        (impostos.COFINS || 0) +
+        (impostos.IPI || 0);
 
-    return total + somaImpostos;
-  }, 0).toFixed(2);
+      return total + somaImpostos;
+    }, 0)
+    .toFixed(2);
 }
 
 function montarDescricao(itens: NotaAPI["itens"]) {
   if (itens.length === 1) return itens[0].descricao;
-  return itens.map(item => item.descricao).join(", ");
+  return itens.map((item) => item.descricao).join(", ");
 }
 
 export function Tabela({
@@ -111,6 +118,7 @@ export function Tabela({
       setPaginaAtual(novaPagina);
     }
   };
+  const router = useRouter();
 
   return (
     <>
@@ -167,6 +175,15 @@ export function Tabela({
                   <option value="paga">paga</option>
                   <option value="cancelada">cancelada</option>
                 </select>
+              </TableCell>
+              <TableCell>
+                <Button
+                  onClick={() => {
+                    router.push(`ver-nota?id=${nota.id}`);
+                  }}
+                >
+                  <Eye />
+                </Button>
               </TableCell>
             </TableRow>
           ))}

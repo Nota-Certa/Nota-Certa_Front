@@ -30,39 +30,43 @@ const Page = () => {
       });
   }, []);
 
-  if (!notaData) return <div>Carregando...</div>;
+  let e;
+  if (!notaData) return (e = <div>Carregando...</div>);
 
+  e = (
+    <>
+      <div className="flex flex-col  py-12  justify-center items-start">
+        <h1 className="text-4xl font-bold">Veja sua NF-e</h1>
+      </div>
+      <div className="w-full flex justify-end">
+        <PDFDownloadLink
+          document={<NotaFiscalPDF data={notaData} />}
+          fileName={`nota-fiscal-${notaData.id}.pdf`}
+        >
+          {({ loading }) => (
+            <Button disabled={loading}>
+              {loading ? (
+                <Spin indicator={<LoadingOutlined />} />
+              ) : (
+                <div className="flex space-x-2">
+                  <h1>Baixar Nota</h1>
+                  <ArrowDownToLine />
+                </div>
+              )}
+            </Button>
+          )}
+        </PDFDownloadLink>
+      </div>
+      <PDFViewer width="100%" height="100%" className="py-12">
+        <NotaFiscalPDF data={notaData} />
+      </PDFViewer>
+    </>
+  );
   return (
     <>
       <div className="flex flex-row">
         <BarraLateral />
-        <div className="w-screen h-screen px-11 bg-[#F2F5FA]">
-          <div className="flex flex-col  py-12  justify-center items-start">
-            <h1 className="text-4xl font-bold">Veja sua NF-e</h1>
-          </div>
-          <div className="w-full flex justify-end">
-            <PDFDownloadLink
-              document={<NotaFiscalPDF data={notaData} />}
-              fileName={`nota-fiscal-${notaData.id}.pdf`}
-            >
-              {({ loading }) => (
-                <Button disabled={loading}>
-                  {loading ? (
-                    <Spin indicator={<LoadingOutlined />} />
-                  ) : (
-                    <div className="flex space-x-2">
-                      <h1>Baixar Nota</h1>
-                      <ArrowDownToLine />
-                    </div>
-                  )}
-                </Button>
-              )}
-            </PDFDownloadLink>
-          </div>
-          <PDFViewer width="100%" height="100%" className="py-12">
-            <NotaFiscalPDF data={notaData} />
-          </PDFViewer>
-        </div>
+        <div className="w-screen h-screen px-11 bg-[#F2F5FA]">{e}</div>
       </div>
     </>
   );

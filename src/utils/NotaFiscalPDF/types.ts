@@ -1,6 +1,8 @@
 export type Impostos = {
   IPI: number;
   ICMS: number;
+  PIS: number;
+  COFINS: number;
 };
 
 export type ItemNotaFiscal = {
