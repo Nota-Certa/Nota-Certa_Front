@@ -25,6 +25,7 @@ export type NotaAPI = {
   status: string;
   data_emissao: string;
   data_vencimento: string;
+  valor_total: string;
   itens: {
     descricao: string;
     quantidade: number;
@@ -161,15 +162,14 @@ export function Tabela({
                       alert("Erro ao atualizar status.");
                     }
                   }}
-                  className={`py-2 px-3 rounded-xl text-white font-semibold w-fit cursor-pointer ${
-                    nota.status === "paga"
+                  className={`py-2 px-3 rounded-xl text-white font-semibold w-fit cursor-pointer ${nota.status === "paga"
                       ? "bg-[#37912B]"
                       : nota.status === "cancelada"
                         ? "bg-[#CE5454]"
                         : nota.status === "pendente"
                           ? "bg-[#e7c54a]"
                           : "bg-[#696969]"
-                  }`}
+                    }`}
                 >
                   <option value="pendente">pendente</option>
                   <option value="paga">paga</option>

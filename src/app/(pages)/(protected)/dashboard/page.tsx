@@ -2,21 +2,15 @@
 import React, { useEffect, useState } from "react";
 import BarraLateral from "@/app/components/barraLateral";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { getNotasPeriodo, getRanking } from "@/services/dashboard";
+import { getRanking } from "@/services/dashboard";
+import { getNotasDoUsuario } from "@/services/auth";
+import { NotaAPI } from "@/app/components/tabela";
 
 interface Cliente {
   documento: string;
   nome_razao_social: string;
   qtd: number;
 }
-
-interface Note {
-  data_emissao: string;
-  status: string;
-  valor_total: string;
-
-}
-
 interface MonthlyBarData {
   name: string;
   quantidade: number;
@@ -50,7 +44,7 @@ export default function Dashboard() {
     }).format(value);
   };
 
-  const processNotesData = (notes: Note[]): { totalPayedValue: number; barChartData: MonthlyBarData[] } => {
+  const processNotesData = (notes: NotaAPI[]): { totalPayedValue: number; barChartData: MonthlyBarData[] } => {
     const currentYear: number = new Date().getFullYear();
     let totalPayedValue: number = 0;
     const monthlyCounts: { [key: string]: number } = {
@@ -60,7 +54,7 @@ export default function Dashboard() {
     const monthNames: string[] = ["Jan", "Fev", "Mar", "Abr", "Maio", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
     if (notes && Array.isArray(notes)) {
-      notes.forEach((note: Note) => {
+      notes.forEach((note: NotaAPI) => {
         if (note.data_emissao && note.status) {
           const emissionDate = new Date(note.data_emissao);
           const noteYear: number = emissionDate.getFullYear();
@@ -96,7 +90,7 @@ export default function Dashboard() {
 
   async function handleNotas(): Promise<void> {
     try {
-      const result: Note[] = await getNotasPeriodo();
+      const result: NotaAPI[] = await getNotasDoUsuario();
       const { totalPayedValue, barChartData } = processNotesData(result);
       const statusPieData = processStatusPieData(result);
       setAuthorizedNotesTotalValue(totalPayedValue);
@@ -110,7 +104,7 @@ export default function Dashboard() {
   const progressPercentage: number = (authorizedNotesTotalValue / MAX_TARGET_VALUE) * 100;
 
 
-  const processStatusPieData = (notes: Note[]): PieChartDataItem[] => {
+  const processStatusPieData = (notes: NotaAPI[]): PieChartDataItem[] => {
     const statusCounts: { [key: string]: number } = {
       "CANCELADA": 0,
       "PAGA": 0,
@@ -120,7 +114,7 @@ export default function Dashboard() {
     let totalRelevantNotes = 0;
 
     if (notes && Array.isArray(notes)) {
-      notes.forEach((note: Note) => {
+      notes.forEach((note: NotaAPI) => {
         if (note.status) {
           const statusKey = note.status.toUpperCase();
           if (statusCounts.hasOwnProperty(statusKey)) {
